@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Alert } from 'react-native';
 import Checkbox from 'expo-checkbox';
 import { Audio } from 'expo-av';
@@ -7,32 +7,61 @@ export default function App() {
   const [isClapTriggerEnabled, setClapTriggerEnabled] = useState(false);
   const [isHandTriggerEnabled, setHandTriggerEnabled] = useState(false);
   const [isStarted, setIsStarted] = useState(false);
+  const [timer, setTimer] = useState(0);
 
-  const playBellSound = async () => {
+  const playBellSound = async (times: number = 1) => {
     try {
-      const { sound } = await Audio.Sound.createAsync(
-        require('./assets/bell.mp3') // Update to your file name
-      );
-      await sound.playAsync();
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          sound.unloadAsync(); // Unload to free memory
-        }
-      });
+      for (let i = 0; i < times; i++) {
+        const { sound } = await Audio.Sound.createAsync(
+          require('./assets/bell.mp3')
+        );
+        await sound.playAsync();
+        await new Promise(resolve => setTimeout(resolve, 1000)); // 1-second gap between bells
+        await sound.unloadAsync(); // Unload after each play
+      }
     } catch (error) {
-      Alert.alert('Error', 'Failed to play bell sound');
+      Alert.alert('Error', 'Failed to play bell sound. Check if bell.mp3 exists in assets.');
       console.error(error);
     }
   };
 
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (isStarted) {
+      // 7-second delay for start bell
+      setTimeout(() => {
+        playBellSound(1); // Single bell after 7 seconds
+      }, 7000);
+
+      // Start 2-minute timer
+      interval = setInterval(() => {
+        setTimer(prev => {
+          if (prev >= 25) { // 2 minutes = 120 seconds
+            playBellSound(2); // Double bell at end
+            setIsStarted(false); // Reset to "Start"
+            return 0;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isStarted]);
+
   return (
     <View style={styles.container}>
+      <Text style={styles.testText}>
+        {isStarted ? `Time: ${timer}s` : 'Testing UI'}
+      </Text>
       <TouchableOpacity
         style={styles.button}
         onPress={() => {
           setIsStarted(!isStarted);
-          if (!isStarted) {
-            playBellSound(); // Play bell when starting
+          if (isStarted) {
+            setTimer(0); // Reset timer on Restart
           }
         }}
       >
@@ -67,6 +96,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000', // Black background
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  testText: {
+    color: '#FFFFFF', // White text
+    fontSize: 20,
+    marginBottom: 20,
   },
   button: {
     backgroundColor: '#FFFFFF', // White button
