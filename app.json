@@ -7,7 +7,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
@@ -33,7 +32,7 @@
         "expo-camera",
         {
           "cameraPermission": "Allow ShambhaviTimer to access your camera for hand detection.",
-          "microphonePermission": "Allow ShambhaviTimer to access your microphone for clap and aahm detection."
+          "microphonePermission": "Allow ShambhaviTimer to access your microphone for clap and aahm detection"
         }
       ]
     ]
